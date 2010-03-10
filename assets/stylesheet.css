@@ -1,0 +1,18 @@
+.localist_menu {
+margin: 0px;
+padding: 0px;
+}
+
+.localist_menu .localist_selected_flag {
+padding: 3px;
+border: 1px solid #bbb;
+}
+
+.localist_menu .localist_unselected_flag {
+padding: 4px;
+}
+
+.localist_menu .localist_unselected_flag:hover {
+padding: 3px;
+border: 1px dotted red;
+}

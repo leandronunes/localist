@@ -1,0 +1,141 @@
+= LOCALIST PLUGIN v0.5
+
+<b>"If you need to go global, a Localist may help!"</b> :-)
+
+Localist helps in multilanguage/globalized applications. It automatically finds the best match between the locales accepted by your users and the locales supported by your application (per rules defined in <b>RFC2616</b>, <i>section 14.4: HTTP/1.1 - Header Field Definitions - Accept-Language</i>) and maintain it in successive requests. It also offers a nice country-flag menu to allow the users to manually switch to another locale.
+
+== Features:
+* only 3-5 lines of code required to use it
+* finds, sets and maintains the best locale match in successive requests
+* smart fallback when no match is possible
+* <b>RFC2616</b> compilant
+* provides a nice flag menu with the active locale indicator
+* allows the user to manually switch the locale
+* includes the flag icons of all the <b>ISO3166-1 alpha-2</b> countries
+* fully configurable (by variables) 
+* fully customizable (by overriding methods and templates)
+
+= REQUIREMENTS
+
+Download the meta-tools lib form here http://ruby.4pro.net/meta-tools/download/ and install it:
+
+  % [sudo] gem install meta-tool-1.0.gem
+  
+= REPOSITORY
+
+  http://rails-localist.googlecode.com/svn/trunk/
+
+= QUICK START
+
+in <i>app/controllers/application.rb</i>:
+
+  before_filter :localist
+
+in <i>config/environment.rb</i>:
+
+  Localist.supported_locales = %w[ en-US it-IT es-ES fr-FR ..... ]
+  Localist.callback = lambda{ |client_locale| do_something_with( client_locale ) }
+
+in the head container of your layout:
+
+  <%= stylesheet_link_tag "localist/stylesheet.css", :media=>'all' %>
+
+somewhere in the body container of your layout or template:
+
+  <%= localist_menu %>  
+
+= USAGE
+
+Use the <tt>:localist</tt> method as a <tt>before_filter</tt> in your controller (usually in <i>app/controllers/application_controller.rb</i>), and eventually the <tt>localist_menu</tt> helper. You should also add a tag in your layout:
+
+    <%= stylesheet_link_tag "localist/stylesheet.css", :media=>'all' %>
+
+== Before Filter
+
+=== <tt>before_filter :localist</tt>
+The <tt>:localist</tt> filter parses the <tt>HTTP_ACCEPT_LANGUAGE</tt> of the request and finds the best match with the locales supported by your application. If no best match is found, it consider as the best match the <tt>Localist.default_locale</tt> (which has a default of <tt>Localist.supported_locales.first</tt>) unless you have defined a <tt>:localist_no_match method</tt>. In that case it simply give up and pass the decision about what to do to your method. 
+
+== Variables
+
+=== <tt>Localist.supported_locales</tt>  
+The list of the locales supported by your application. You must set it!
+
+=== <tt>Localist.callback</tt>
+As soon as Localist finds the best locale match (or retrieve it from the params or the cookies), it sets <tt>@localist_active_locale</tt> and calls the <tt>callback</tt>, passing it the best match as the single parameter. The callback can be a <tt>Proc</tt> or a <tT>Symbol</tt> (representing a defined method). In the callback you can set the locale of your preferred i18n plugin. If you don't set any <tt>callback</tt>, you can use the <tt>@localist_active_locale</tt> in your code however.
+
+=== <tt>Localist.symbol</tt>
+This is the symbol used for the cookie that localist uses to maintain the locale between requests and used for the temporary param when the client manually switches the locale. Default <tt>:locale</tt>.
+
+=== <tt>Localist.auto_setup</tt>
+When <tt>true</tt>, localist syncronizes the public flag images with the locales that your application supports. That means that when you restart the server, it remove the old flags dir, and make another one, copying inside it the used flag assets. Default <tt>true</tt> in development mode and <tt>false</tt> otherwise.
+
+=== <tt>Localist.strict2616</tt>
+  
+Set this to <tt>true</tt> for strict <b>RFC2616</b> compatibility. It is <tt>false</tt> by default because strictness is useful in very special cases: change it only if you know what you are doing.
+
+== Helpers
+
+=== <tt>localist_menu([options])</tt>
+This is a helper that creates a switch menu, with a <country_code>.png icon for each country in your Localist.supported_locales. It uses the alpha-2 country code as defined in the <b>ISO3166-1</b>. If you use standard locale names (e.g en-US or it-IT) it finds the correct flag and use it as the link to switch to the localized page. The Flag icons distributed with localist come from http://www.famfamfam.com.
+
+The options of the localist_menu helper may be useful for personalizing the menu or for supporting 2 different locales in the same page. They are all optionals:
+
+[<b><tt>:supported_locales</tt></b>]    (default: <tt>Localist.supported_locales</tt>)
+[<b><tt>:active</tt></b>]               (default: <tt>@localist_active_locale</tt>)
+
+[<b><tt>:symbol</tt></b>]              (default: <tt>Localist.symbol</tt>)
+[<tt><b>:template</tt></b>]             (default: <i>/app/views/localist/menu.rhtml</i>, overridable in <i>/app/view/localist/menu.rhtml</i> or settable as you need)
+
+All the options (less the <tt>:template</tt>) are available as the localist_menu hash in the template.
+
+=== <tt>localist_flag_tag(locale)</tt>
+This is a helper used in the localist menu template, which returns the image_tag for the flag.
+
+= EXAMPLE
+
+in <i>config/environment.rb</i>:
+
+  # mandatory assignation
+  Localist.supported_locales = %w[ en-US it-IT es-ES fr-FR]
+   
+  # optional assignations
+  Localist.callback = lambda{|best_match| Locale.set(best_match)} # or :my_method_for_globalize
+  Localist.default_locale = "es-ES" 
+  Localist.symbol = :my_symbol
+  Localist.auto_setup = false
+
+in <i>app/controllers/application_controller.rb</i>:
+
+  before_filter :localist
+
+in the head container of your layout:
+
+  <%= stylesheet_link_tag "localist/stylesheet", :media=>'all' %>
+
+in any layout or template:
+
+  <%= localist_menu %>
+
+Syncronized files (auto-copied if :auto_setup => true):
+
+  public/images/localist/flags/us.png
+  public/images/localist/flags/it.png
+  public/images/localist/flags/es.png
+  public/images/localist/flags/fr.png
+  public/stylesheets/localist/stylesheet.css
+
+= CHANGELOG
+
+== Version 0.5
+* First public release
+
+= TO DO
+
+* Adding tests
+  
+= AUTHOR AND COPYRIGHT
+
+Copyright (c) 2007 by Domizio Demichelis
+
+This plugin is free software. It may be used, redistributed and/or modified
+under the same terms as Rails itself
